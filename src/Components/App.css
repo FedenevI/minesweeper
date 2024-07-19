@@ -52,6 +52,10 @@
 
 }
 
+.playground__cell-open {
+  color: white;
+}
+
 .row {
   color: white;
 }
@@ -121,6 +125,9 @@
   color: #ff7f11;
 }
 
+.result__message {
+  color: white;
+}
 
 
 

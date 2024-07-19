@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+
+export const TOTAL_COUNT = 90
+
 function App() {
   const [sizeBoard, setSizeBoard] = useState(10);
   const [manyBombs, setManyBombs] = useState(5);
@@ -8,7 +11,27 @@ function App() {
   const [openedCells, setOpenedCells] = useState([]);
   const [flagged, setFlagged] = useState([]);
   const [stopGame, setStopGame] = useState(false);
-  const [winGame, setWinGame] = useState('')
+  const [winGame, setWinGame] = useState('');
+  const [leftFlgs, setLeftFlgs] = useState(manyBombs);
+  const [counter, setCounter] = useState(TOTAL_COUNT)
+  const [inter, setInter] = useState('')
+
+
+  useEffect(() => {
+    setLeftFlgs(manyBombs - flagged.length)
+  }, [flagged, manyBombs])
+
+  useEffect(() => {
+    if (counter === 0) {
+      clearInterval(inter)
+      setCounter(counter)
+      setStopGame(true)
+      revealAllBombs()
+      setWinGame('loss')
+
+    }
+  }, [counter])
+
 
   //Функция для создания начального игрового поля
   const initializeBoard = (size, manyBombs) => {
@@ -23,7 +46,6 @@ function App() {
     return newBoard.map((row, x) =>
       row.map((cell, y) => cell === 'bomb' ? '💣' : countBombs(x, y, newBoard))
     );
-
   };
 
   // Функция для подсчета бомб вокруг ячейки
@@ -46,9 +68,11 @@ function App() {
   };
 
   // Используем useEffect для инициализации игрового поля при монтировании компонента
-  useEffect(() => {
-    setBoard(initializeBoard(sizeBoard, manyBombs));
-  }, [sizeBoard, manyBombs]);
+  // useEffect(() => {
+  //   setBoard(initializeBoard(sizeBoard, manyBombs));
+  // }, []);
+
+  console.log('board', board);
 
   const cordBombs = board.reduce((acc, row, x) => {
     row.forEach((cell, y) => {
@@ -101,7 +125,9 @@ function App() {
         } else if (board[x][y] === '💣') {
           setStopGame(true)
           revealAllBombs()
-          setWinGame('loss')
+          setWinGame('loss');
+          clearInterval(inter)
+          setCounter(counter)
         }
       }
       return newOpenedCells;
@@ -119,18 +145,26 @@ function App() {
     // const cellKey = `${x}-${y}`;
     if (!openedCells.includes(`${x}-${y}`)) { // Добавить флаг только если ячейка не открыта
       setFlagged(flags => {
-        const newFlags = flags.filter(flag => flag !== `${x}-${y}`); // Удалить флаг, если он уже установлен
+        const newFlags = flags.filter(flag => flag !== `${x}-${y}`);
+
+        // Удалить флаг, если он уже установлен
         if (newFlags.length === flags.length && newFlags.length < manyBombs) {
           newFlags.push(`${x}-${y}`); // Добавить флаг, если его нет
         }
         if (checkToWin(newFlags, cordBombs)) {
           setStopGame(true);
+          setWinGame('win');
+          clearInterval(inter)
+          setCounter(counter)
         }
+
         return newFlags;
       });
 
     }
   };
+
+
 
   // Проверка на победу.
   const checkToWin = (flagged, cordBombs) => cordBombs.every(element => flagged.includes(element));
@@ -147,13 +181,24 @@ function App() {
     });
   };
 
+
+
   const resetGame = () => {
     setBoard(initializeBoard(sizeBoard, manyBombs));
     setOpenedCells([]);
     setFlagged([]);
-    setStopGame(false)
+    setStopGame(false);
+    setWinGame('')
+    setLeftFlgs(manyBombs)
 
+    const t = setInterval(() => {
+      setCounter(prevState => prevState - 1)
+    }, 1000)
+
+    setInter(t)
+    setCounter(TOTAL_COUNT)
   }
+
 
   // Проверка, открыта ли ячейка
   const isCellOpened = (x, y) => {
@@ -163,8 +208,6 @@ function App() {
   const isFlagged = (x, y) => {
     return flagged.includes(`${x}-${y}`);
   }
-
-  console.log(stopGame);
 
 
   return (
@@ -177,11 +220,43 @@ function App() {
       <main className='main'>
 
         <section className='board'>
-          <div className='board__size'></div>
-          <div className='board__manybombs'></div>
+
+          <div className='board__size'>
+            <button onClick={() => {
+              setSizeBoard(10)
+            }}>10</button>
+            <button onClick={() => {
+              setSizeBoard(15)
+            }}>15</button>
+            <button onClick={() => {
+              setSizeBoard(20)
+            }}>20</button>
+          </div>
+
+          <div className='board__manybombs'>
+            <button onClick={() => {
+              setManyBombs(10)
+            }}>10</button>
+            <button onClick={() => {
+              setManyBombs(30)
+            }}>30</button>
+            <button onClick={() => {
+              setManyBombs(50)
+            }}>50</button>
+          </div>
+
           <button className='board__restart' onClick={resetGame}>🙂</button>
-          <div className='board__flags'></div>
-          <div className='board__timer'></div>
+
+
+          <div className='board__flags'>
+            left {leftFlgs} flags
+          </div>
+
+          <div className='board__timer'>{
+            counter + '/' + TOTAL_COUNT
+          }</div>
+
+
         </section>
 
         <section className="playground">
