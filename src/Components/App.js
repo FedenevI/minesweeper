@@ -2,24 +2,26 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 
-export const TOTAL_COUNT = 90
+const TOTAL_COUNT = 180;
 
 function App() {
-  const [sizeBoard, setSizeBoard] = useState(10);
-  const [manyBombs, setManyBombs] = useState(5);
+  const [sizeBoard, setSizeBoard] = useState(0);
+  const [manyBombs, setManyBombs] = useState(0);
+  const [isCheckManyBomb, setIsCheckManyBomb] = useState(0);
+  const [isCheckSizeBoard, setIsCheckSizeBoard] = useState(0)
   const [board, setBoard] = useState([]);
   const [openedCells, setOpenedCells] = useState([]);
   const [flagged, setFlagged] = useState([]);
   const [stopGame, setStopGame] = useState(false);
   const [winGame, setWinGame] = useState('');
-  const [leftFlgs, setLeftFlgs] = useState(manyBombs);
+  const [leftFlgs, setLeftFlgs] = useState(isCheckManyBomb);
   const [counter, setCounter] = useState(TOTAL_COUNT)
-  const [inter, setInter] = useState('')
-
+  const [inter, setInter] = useState('');
+  
 
   useEffect(() => {
-    setLeftFlgs(manyBombs - flagged.length)
-  }, [flagged, manyBombs])
+    setLeftFlgs(isCheckManyBomb - flagged.length)
+  }, [flagged])
 
   useEffect(() => {
     if (counter === 0) {
@@ -27,7 +29,7 @@ function App() {
       setCounter(counter)
       setStopGame(true)
       revealAllBombs()
-      setWinGame('loss')
+      setWinGame('matrix has you')
 
     }
   }, [counter])
@@ -67,13 +69,6 @@ function App() {
     return counter;
   };
 
-  // Используем useEffect для инициализации игрового поля при монтировании компонента
-  // useEffect(() => {
-  //   setBoard(initializeBoard(sizeBoard, manyBombs));
-  // }, []);
-
-  console.log('board', board);
-
   const cordBombs = board.reduce((acc, row, x) => {
     row.forEach((cell, y) => {
       if (cell === '💣') {
@@ -91,9 +86,9 @@ function App() {
         const newY = y + k;
         // Проверяем, что не выходим за границы поля и что клетка не открыта и не помечена флагом
         if (newX >= 0
-          && newX < sizeBoard
+          && newX < isCheckSizeBoard
           && newY >= 0
-          && newY < sizeBoard
+          && newY < isCheckSizeBoard
           && !flagged.includes(`${newX}-${newY}`)
           && !newOpenedCells.includes(`${newX}-${newY}`)) {
           newOpenedCells.push(`${newX}-${newY}`);
@@ -125,7 +120,7 @@ function App() {
         } else if (board[x][y] === '💣') {
           setStopGame(true)
           revealAllBombs()
-          setWinGame('loss');
+          setWinGame('matrix has you');
           clearInterval(inter)
           setCounter(counter)
         }
@@ -136,19 +131,17 @@ function App() {
 
 
   const handleRightClick = (event, x, y) => {
-    event.preventDefault(); // Предотвратить стандартное поведение контекстного меню
+    event.preventDefault(); 
 
     if (stopGame) {
       return;
     }
 
-    // const cellKey = `${x}-${y}`;
     if (!openedCells.includes(`${x}-${y}`)) { // Добавить флаг только если ячейка не открыта
       setFlagged(flags => {
-        const newFlags = flags.filter(flag => flag !== `${x}-${y}`);
-
         // Удалить флаг, если он уже установлен
-        if (newFlags.length === flags.length && newFlags.length < manyBombs) {
+        const newFlags = flags.filter(flag => flag !== `${x}-${y}`);
+        if (newFlags.length === flags.length && newFlags.length < isCheckManyBomb) {
           newFlags.push(`${x}-${y}`); // Добавить флаг, если его нет
         }
         if (checkToWin(newFlags, cordBombs)) {
@@ -168,6 +161,8 @@ function App() {
 
   // Проверка на победу.
   const checkToWin = (flagged, cordBombs) => cordBombs.every(element => flagged.includes(element));
+
+  
   // Функция для открытия всех ячеек с бомбами
   const revealAllBombs = () => {
     setOpenedCells(prevOpenedCells => {
@@ -182,9 +177,11 @@ function App() {
   };
 
 
-
   const resetGame = () => {
+    clearInterval(inter)
     setBoard(initializeBoard(sizeBoard, manyBombs));
+    setIsCheckSizeBoard(sizeBoard);
+    setIsCheckManyBomb(manyBombs)
     setOpenedCells([]);
     setFlagged([]);
     setStopGame(false);
@@ -215,48 +212,25 @@ function App() {
 
       <header className='header'>
         <h1 className='header__title'>Wake up Neo</h1>
+       
       </header>
 
       <main className='main'>
 
         <section className='board'>
-
-          <div className='board__size'>
-            <button onClick={() => {
-              setSizeBoard(10)
-            }}>10</button>
-            <button onClick={() => {
-              setSizeBoard(15)
-            }}>15</button>
-            <button onClick={() => {
-              setSizeBoard(20)
-            }}>20</button>
+          <div className='board__cell board__size'>
+            <button className ={`board__buttone ${sizeBoard === 10 ? 'board__buttone_on' : ''}`} onClick={() => { setSizeBoard(10) }}>10</button>
+            <button className ={`board__buttone ${sizeBoard === 15 ? 'board__buttone_on' : ''}`} onClick={() => { setSizeBoard(15) }}>15</button>
+            <button className ={`board__buttone ${sizeBoard === 20 ? 'board__buttone_on' : ''}`} onClick={() => { setSizeBoard(20) }}>20</button>
           </div>
 
-          <div className='board__manybombs'>
-            <button onClick={() => {
-              setManyBombs(10)
-            }}>10</button>
-            <button onClick={() => {
-              setManyBombs(30)
-            }}>30</button>
-            <button onClick={() => {
-              setManyBombs(50)
-            }}>50</button>
+          <button className='board__cell board__restart' onClick={resetGame} disabled = {sizeBoard  === 0 || manyBombs === 0 ? true : false}>🙂</button>
+          
+          <div className='board__cell board__manybombs'>
+            <button className ={`board__buttone ${manyBombs === 10 ? 'board__buttone_on' : ''}`} onClick={() => { setManyBombs(10) }}>10</button>
+            <button className ={`board__buttone ${manyBombs === 30 ? 'board__buttone_on' : ''}`} onClick={() => { setManyBombs(30) }}>30</button>
+            <button className ={`board__buttone ${manyBombs === 50 ? 'board__buttone_on' : ''}`} onClick={() => { setManyBombs(50) }}>50</button>
           </div>
-
-          <button className='board__restart' onClick={resetGame}>🙂</button>
-
-
-          <div className='board__flags'>
-            left {leftFlgs} flags
-          </div>
-
-          <div className='board__timer'>{
-            counter + '/' + TOTAL_COUNT
-          }</div>
-
-
         </section>
 
         <section className="playground">
@@ -269,18 +243,29 @@ function App() {
                   onClick={() => handleCellClick(x, y)}
                   onContextMenu={(event) => handleRightClick(event, x, y)}
                 >
-                  {isCellOpened(x, y) ? cell : (isFlagged(x, y) ? '🚩' : '')}
+                  {isCellOpened(x, y) ? (cell === 0 ? '' : cell) : (isFlagged(x, y) ? '🚩' : '')}
                 </div>
               ))}
             </div>
           ))}
         </section>
 
-        <section className='result'>
-          <h2 className='result__message'>{winGame}</h2>
+        <section className='board'>
+          <div className='board__cell board__flags'>Осталось {leftFlgs} Флагов</div>
+          <h2 className=' board__cell result__message'>{winGame}</h2>
+          <div className='board__cell board__timer'>{counter + '/' + TOTAL_COUNT}</div>
         </section>
 
       </main>
+
+      <footer className='footer'>
+        <p className='footer__message'>
+        {sizeBoard  === 0 || manyBombs === 0 ? 
+        ("для начала игры выбери размер поля(слева) и кол-во мин(справа)"):
+        ('Кликай по смайлу для запуска/рестарта игры. Размер поля(слева) и кол-во мин(справа)')}
+        </p>
+      </footer>
+
     </div>
   );
 
